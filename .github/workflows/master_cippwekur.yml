@@ -1,4 +1,7 @@
-name: Azure Static Web Apps CI/CD
+
+
+
+name: cippwekur
 
 on:
   push:
@@ -18,11 +21,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Build And Deploy
+      - name: cippwekur
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_CHANGE_ME_047D97703 }} # change this to your repository secret name
+          azure_static_web_apps_api_token: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F866BF5F4E8A489FB57F2E97C23B2FAC }} # change this to your repository secret name
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
@@ -41,5 +44,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_CHANGE_ME_047D97703 }} # change this to your repository secret name
+          azure_static_web_apps_api_token: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F866BF5F4E8A489FB57F2E97C23B2FAC }} # change this to your repository secret name
           action: "close"
