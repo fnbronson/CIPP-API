@@ -11,6 +11,11 @@
         $TenantFilter
     )
 
+    #Add rerun protection: This Monitor can only run once every hour.
+    $Rerun = Test-CIPPRerun -TenantFilter $TenantFilter -Type 'ExchangeMonitor' -API 'Get-CIPPAlertQuarantineReleaseRequests'
+    if ($Rerun) {
+        return
+    }
     $HasLicense = Test-CIPPStandardLicense -StandardName 'QuarantineReleaseRequests' -TenantFilter $TenantFilter -RequiredCapabilities @(
         'EXCHANGE_S_STANDARD',
         'EXCHANGE_S_ENTERPRISE',
@@ -24,7 +29,13 @@
     }
 
     try {
-        $RequestedReleases = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-QuarantineMessage' -cmdParams @{ PageSize = 1000; ReleaseStatus = 'Requested' } -ErrorAction Stop | Select-Object -ExcludeProperty *data.type*
+        $cmdParams = @{
+            PageSize          = 1000
+            ReleaseStatus     = 'Requested'
+            StartReceivedDate = (Get-Date).AddHours(-6)
+            EndReceivedDate   = (Get-Date).AddHours(0)
+        }
+        $RequestedReleases = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-QuarantineMessage' -cmdParams $cmdParams -ErrorAction Stop | Select-Object -ExcludeProperty *data.type* | Sort-Object -Property ReceivedTime
 
         if ($RequestedReleases) {
             # Get the CIPP URL for the Quarantine link
@@ -38,7 +49,7 @@
                     MessageId         = $Message.MessageId
                     Subject           = $Message.Subject
                     SenderAddress     = $Message.SenderAddress
-                    RecipientAddress  = $Message.RecipientAddress
+                    RecipientAddress  = $Message.RecipientAddress -join '; '
                     Type              = $Message.Type
                     PolicyName        = $Message.PolicyName
                     ReleaseStatus     = $Message.ReleaseStatus
@@ -51,6 +62,6 @@
             Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
         }
     } catch {
-        Write-AlertMessage -tenant $TenantFilter -message "QuarantineReleaseRequests: $(Get-NormalizedError -message $_.Exception.Message)"
+        Write-LogMessage -API 'Alerts' -tenant $TenantFilter -message "QuarantineReleaseRequests: $(Get-NormalizedError -message $_.Exception.Message)" -sev Error
     }
 }
